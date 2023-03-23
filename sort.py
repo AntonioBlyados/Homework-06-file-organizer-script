@@ -5,22 +5,36 @@ import sys
 from unidecode import unidecode
 import re
 import transliterate
+import tempfile
+import zipfile
+import tarfile
 
 IMAGE_EXTENSIONS = ('JPEG', 'PNG', 'JPG', 'SVG')
 VIDEO_EXTENSIONS = ('AVI', 'MP4', 'MOV', 'MKV')
 DOCUMENT_EXTENSIONS = ('DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX')
 MUSIC_EXTENSIONS = ('MP3', 'OGG', 'WAV', 'AMR')
 ARCHIVE_EXTENSIONS = ('ZIP', 'GZ', 'TAR', 'RAR')
+TRANS = {
+    ord('а'): 'a', ord('б'): 'b', ord('в'): 'v', ord('г'): 'g',
+    ord('д'): 'd', ord('е'): 'e', ord('ё'): 'e', ord('ж'): 'zh',
+    ord('з'): 'z', ord('и'): 'i', ord('й'): 'i', ord('к'): 'k',
+    ord('л'): 'l', ord('м'): 'm', ord('н'): 'n', ord('о'): 'o',
+    ord('п'): 'p', ord('р'): 'r', ord('с'): 's', ord('т'): 't',
+    ord('у'): 'u', ord('ф'): 'f', ord('х'): 'kh', ord('ц'): 'ts',
+    ord('ч'): 'ch', ord('ш'): 'sh', ord('щ'): 'shch', ord('ъ'): '',
+    ord('ы'): 'y', ord('ь'): '', ord('э'): 'e', ord('ю'): 'iu',
+    ord('я'): 'ia'
+}
+
 
 
 def normalize(filename):
     valid_chars = '-_.() %s%s' % (string.ascii_letters, string.digits)
-    filename = ''.join(c for c in filename if c in valid_chars)
+    filename = ''.join(c for c in filename if str(c) in valid_chars)
     print(f'Before transliteration: {filename}')
-    filename = transliterate.translit(filename, 'ru', reversed=True)
+    filename = filename.translate(TRANS)
     print(f'After transliteration: {filename}')
     return filename
-
 
 
 def process_folder(path, overwrite=False, visited=set()):
@@ -62,13 +76,12 @@ def process_folder(path, overwrite=False, visited=set()):
             else:
                 other.append(full_path)
         elif os.path.isdir(full_path):
-           
             if os.path.islink(full_path):
                 print(f'Skipping symbolic link {full_path}')
             else:
                 process_folder(full_path, overwrite=overwrite, visited=visited)
 
-    for file_list, folder_name in [(images, 'Images'), (videos, 'Videos'), (documents, 'Documents'), (music, 'Music'), (archives, 'Archives'), (other, 'Other')]:
+    for file_list, folder_name in [(images, 'Images'), (videos, 'Videos'), (documents, 'Documents'), (music, 'Music'), (other, 'Other')]:
         folder_path = os.path.join(path, folder_name)
         os.makedirs(folder_path, exist_ok=True)
         moved_files = 0
@@ -82,18 +95,30 @@ def process_folder(path, overwrite=False, visited=set()):
             else:
                 print(f'File {normalized_name} already exists in folder {folder_name}')
         print(f'Moved {moved_files} files to {folder_name}')
-    
-    return {
-        'known_extensions': known_extensions,
-        'unknown_extensions': unknown_extensions,
-        'images': images,
-        'videos': videos,
-        'documents': documents,
-        'music': music,
-        'archives': archives,
-        'other': other,
-    }
 
+    
+    archive_folder = os.path.join(path, 'Archives')
+    os.makedirs(archive_folder, exist_ok=True)
+    for archive in archives:
+        file_name = os.path.basename(archive)
+        normalized_name = normalize(file_name)
+        new_path = os.path.join(archive_folder, normalized_name)
+        if not os.path.exists(new_path) or overwrite:
+            shutil.unpack_archive(archive, extract_dir=new_path)
+            print(f'Unpacked {normalized_name} to Archives folder')
+        else:
+            print(f'File {normalized_name} already exists in folder Archives')
+    
+    
+    documents_folder = os.path.join(path, 'Documents')
+    os.makedirs(documents_folder, exist_ok=True)
+    for document in documents:
+        file_name = os.path.basename(document)
+        normalized_name = normalize(file_name)
+        new_path = os.path.join(documents_folder, normalized_name)
+        if not os.path.exists(new_path) or overwrite:
+            shutil.move(document, new_path)
+            print(f'Moved {normalized_name} to Documents folder')
 
 
 
