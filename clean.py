@@ -141,19 +141,6 @@ def process_folder(path, overwrite=False, visited=set()):
 
 
 
-if __name__ == '__main__':
-    import sys
-    folder_path = sys.argv[1]
-    result = process_folder(folder_path)
-    print('Known extensions:', result['known_extensions'])
-    print('Unknown extensions:', result['unknown_extensions'])
-    print('Images:', result['images'])
-    print('Videos:', result['videos'])
-    print('Documents:', result['documents'])
-    print('Music:', result['music'])
-    print('Archives:', result['archives'])
-    print('Other:', result['other'])
-
     
 
  
