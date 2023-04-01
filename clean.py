@@ -10,16 +10,6 @@ import zipfile
 import tarfile
 
 
-
-    
-
-
-
-
-
-
-
-
 IMAGE_EXTENSIONS = ('JPEG', 'PNG', 'JPG', 'SVG')
 VIDEO_EXTENSIONS = ('AVI', 'MP4', 'MOV', 'MKV')
 DOCUMENT_EXTENSIONS = ('DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX')
@@ -39,7 +29,6 @@ for c, t in zip(CYRILLIC_SYMBOLS, TRANSLATION):
     TRANS[ord(c.upper())] = t.upper()
 
 
-
 def normalize(filename):
     valid_chars = '-_.() %s%s' % (string.ascii_letters, string.digits)
     print(f'Before transliteration: {filename}')
@@ -47,12 +36,6 @@ def normalize(filename):
     filename = ''.join(c for c in filename if str(c) in valid_chars)
     print(f'After transliteration: {filename}')
     return filename
-
-if __name__ == '__main__':
-    print(normalize("Білі?мухи-налетіли№.")) 
-
-
-
 
 
 def process_folder(path, overwrite=False, visited=set()):
@@ -138,7 +121,9 @@ def process_folder(path, overwrite=False, visited=set()):
             shutil.move(document, new_path)
             print(f'Moved {normalized_name} to Documents folder')
 
-
+if __name__ == '__main__':
+    path = '<path_to_folder>'
+    process_folder(path)
 
 
     
